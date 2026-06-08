@@ -1,0 +1,12 @@
+Review and resolve outstanding Apex test class failures in the FrontecUAT environment so we can validate Dmetri's SVMX code update and unblock the deployment pipeline.
+
+This meeting is to discuss who will be assisting me on the dev side of this.  I don't think this will take 30 mins but just in case. 
+
+Apex Test Failures (5)
+
+Class Name                                Method Name                        Error Message
+BD_PlatformEvent_UT                       testEventUtility                  System.AssertException: Assertion Failed: Expected: 2, Actual: 1 — Class.BD_PlatformEvent_UT.testEventUtility: line 38, column 1
+SVMX_BD_PMHistoryTest                     testPMHistoryWorkOrderUpdate      System.AssertException: Assertion Failed: Expected: Monthly, Actual: null — Class.SVMX_BD_PMHistoryTest.testPMHistoryWorkOrderUpdate: line 39, column 1
+SVMX_BD_SharingRulesTest                  testSharingRules                  System.DmlException: Insert failed — System.NullPointerException: Attempt to de-reference a null object at Class.SVMX_BD_ProductStockTriggerHandler.productStockExternalId: line 346. Stack Trace: Class.SVMX_BD_TestDataFactory.createTestData: line 169
+SVMX_Frontec_PmPlanBulkUpdateHandler_UT   testInvokePMPlanBulkUpdateFail1   System.QueryException: List has no rows for assignment to SObject — Class.SVMX_Frontec_TestDataFactory.createPMPlans: line 17
+SVMX_Frontec_PmPlanBulkUpdateHandler_UT   testInvokePMPlanBulkUpdateSuccess System.QueryException: List has no rows for assignment to SObject — Class.SVMX_Frontec_TestDataFactory.createPMPlans: line 17
