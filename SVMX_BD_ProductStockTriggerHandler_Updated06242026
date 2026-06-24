@@ -1,0 +1,339 @@
+public without sharing class SVMX_BD_ProductStockTriggerHandler {
+
+    public void beforeInsert(List<SVMXC__Product_Stock__c> newList) {
+        System.debug('Product Stock Trigger on Before Insert');
+        debugStock(newList, null);
+        copyRelatedData(newList, null);
+        linkProductStockAccount(newList, null);
+        productStockExternalId(newList);
+    }
+
+    public void beforeUpdate(List<SVMXC__Product_Stock__c> newList, Map<Id, SVMXC__Product_Stock__c> oldMap) {
+        System.debug('Product Stock Trigger on Before Update');
+        debugStock(newList, oldMap);
+        copyRelatedData(newList, oldMap);
+        linkProductStockAccount(newList, oldMap);
+        productStockExternalId(newList);
+    }
+
+    public void afterInsert(List<SVMXC__Product_Stock__c> newList) {
+        System.debug('Product Stock Trigger on After Insert');
+        debugStock(newList, null);
+        createProductStockShares(newList);
+    }
+
+    public void afterUpdate(List<SVMXC__Product_Stock__c> newList, Map<Id, SVMXC__Product_Stock__c> oldMap) {
+        System.debug('Product Stock Trigger on After Update');
+        debugStock(newList, oldMap);
+        productStockReconciliation(newList, oldMap);
+    }
+
+    public void debugStock(List<SVMXC__Product_Stock__c> newList, Map<Id, SVMXC__Product_Stock__c> oldMap) {
+        for (SVMXC__Product_Stock__c stock : newList) {
+            SVMXC__Product_Stock__c old = oldMap == null ? null : oldMap.get(stock.Id);
+            System.debug('Stock Product=' + stock.SVMXC__Product__c + ', Status=' + stock.SVMXC__Status__c
+                + ', Qty=' + stock.SVMXC__Quantity2__c + ', OldQty=' + (old == null ? null : old.SVMXC__Quantity2__c));
+        }
+    }
+
+    public void copyRelatedData(List<SVMXC__Product_Stock__c> newList, Map<Id, SVMXC__Product_Stock__c> oldMap) {
+        Set<Id> locIds = new Set<Id>();
+
+        for (SVMXC__Product_Stock__c stock : newList) {
+            if (stock.SVMX_BD_Account__c == null && stock.SVMXC__Location__c != null) {
+                locIds.add(stock.SVMXC__Location__c);
+            }
+        }
+
+        if (!locIds.isEmpty()) {
+            Map<Id, SVMXC__Site__c> locMap = new Map<Id, SVMXC__Site__c>([
+                SELECT Id, Name, SVMXC__Account__c
+                FROM SVMXC__Site__c
+                WHERE Id IN :locIds
+            ]);
+
+            for (SVMXC__Product_Stock__c stock : newList) {
+                if (stock.SVMX_BD_Account__c == null && stock.SVMXC__Location__c != null) {
+                    SVMXC__Site__c loc = locMap.get(stock.SVMXC__Location__c);
+                    if (loc != null) {
+                        stock.SVMX_BD_Account__c = loc.SVMXC__Account__c;
+                    }
+                }
+            }
+        }
+    }
+
+    public void createProductStockShares(List<SVMXC__Product_Stock__c> triggerNew) {
+        List<SVMXC__Product_Stock__Share> shares = new List<SVMXC__Product_Stock__Share>();
+        Set<Id> accountIds = new Set<Id>();
+
+        for (SVMXC__Product_Stock__c productStock : triggerNew) {
+            if (productStock.SVMX_BD_Account__c != null) {
+                accountIds.add(productStock.SVMX_BD_Account__c);
+            }
+        }
+
+        Map<Id, Account> accountMap = new Map<Id, Account>([
+            SELECT Id,
+                   Name,
+                   BD_Site_Public_Group_Id__c,
+                   BD_Site_Public_Group_Name__c,
+                   BD_Customer_Community_Role_Id__c,
+                   BD_Customer_Community_Role_Name__c,
+                   BD_Partner_Community_Role_Id__c,
+                   BD_Partner_Community_Role_Name__c
+            FROM Account
+            WHERE Id IN :accountIds
+        ]);
+
+        for (SVMXC__Product_Stock__c productStock : triggerNew) {
+            Account parentAccount = accountMap.get(productStock.SVMX_BD_Account__c);
+
+            // AM CHANGE START - prevent null Account error during sharing
+            if (parentAccount == null) {
+                System.debug('AM CHANGE: No Account found for Product Stock: ' + productStock.Id);
+                continue;
+            }
+            // AM CHANGE END
+
+            String sitePublicGroupId = parentAccount.BD_Site_Public_Group_Id__c;
+            String customerCommunityRoleId = parentAccount.BD_Customer_Community_Role_Id__c;
+            String partnerCommunityRoleId = parentAccount.BD_Partner_Community_Role_Id__c;
+
+            if (sitePublicGroupId != null && sitePublicGroupId != '') {
+                shares.add(createProductStockSitePublicGroupShare(sitePublicGroupId, productStock.Id));
+            }
+
+            if (customerCommunityRoleId != null && customerCommunityRoleId != '') {
+                shares.add(createProductStockCustomerCommunityShare(customerCommunityRoleId, productStock.Id));
+            }
+
+            if (partnerCommunityRoleId != null && partnerCommunityRoleId != '') {
+                shares.add(createProductStockPartnerCommunityShare(partnerCommunityRoleId, productStock.Id));
+            }
+        }
+
+        if (!shares.isEmpty()) {
+            insert shares;
+        }
+    }
+
+    public static SVMXC__Product_Stock__Share createProductStockSitePublicGroupShare(Id groupId, Id parentId) {
+        SVMXC__Product_Stock__Share share = new SVMXC__Product_Stock__Share();
+        share.UserOrGroupId = groupId;
+        share.ParentId = parentId;
+        share.AccessLevel = 'edit';
+        share.RowCause = Schema.SVMXC__Product_Stock__Share.RowCause.Site_Public_Group_Share__c;
+        return share;
+    }
+
+    public static SVMXC__Product_Stock__Share createProductStockCustomerCommunityShare(Id groupId, Id parentId) {
+        SVMXC__Product_Stock__Share share = new SVMXC__Product_Stock__Share();
+        share.UserOrGroupId = groupId;
+        share.ParentId = parentId;
+        share.AccessLevel = 'read';
+        share.RowCause = Schema.SVMXC__Product_Stock__Share.RowCause.Customer_Community_Share__c;
+        return share;
+    }
+
+    public static SVMXC__Product_Stock__Share createProductStockPartnerCommunityShare(Id groupId, Id parentId) {
+        SVMXC__Product_Stock__Share share = new SVMXC__Product_Stock__Share();
+        share.UserOrGroupId = groupId;
+        share.ParentId = parentId;
+        share.AccessLevel = 'read';
+        share.RowCause = Schema.SVMXC__Product_Stock__Share.RowCause.Partner_Community_Share__c;
+        return share;
+    }
+
+    // AM CHANGE START - replaced old method that used p.SVMXC__Location__r.SVMXC__Account__c directly
+    public static void linkProductStockAccount(List<SVMXC__Product_Stock__c> newList, Map<Id, SVMXC__Product_Stock__c> oldMap) {
+        Set<Id> locationIds = new Set<Id>();
+
+        for (SVMXC__Product_Stock__c p : newList) {
+            if (p.SVMXC__Location__c != null) {
+                locationIds.add(p.SVMXC__Location__c);
+            }
+        }
+
+        if (locationIds.isEmpty()) {
+            return;
+        }
+
+        Map<Id, SVMXC__Site__c> locationMap = new Map<Id, SVMXC__Site__c>([
+            SELECT Id, SVMXC__Account__c
+            FROM SVMXC__Site__c
+            WHERE Id IN :locationIds
+        ]);
+
+        for (SVMXC__Product_Stock__c p : newList) {
+            SVMXC__Site__c loc = locationMap.get(p.SVMXC__Location__c);
+
+            if (
+                loc != null &&
+                loc.SVMXC__Account__c != null &&
+                loc.SVMXC__Account__c != p.SVMX_BD_Account__c
+            ) {
+                p.SVMX_BD_Account__c = loc.SVMXC__Account__c;
+            }
+        }
+    }
+    // AM CHANGE END
+
+    public class SVMX_BD_AllocatedStockHandler extends BD_TriggerHandler {
+        public override void beforeInsert(List<SObject> newList) {
+            updateAllocatedStock((List<SVMXC__Allocated_Stock__c>)newList, null);
+        }
+
+        public override void beforeUpdate(List<SObject> newList, Map<Id, SObject> oldMap) {
+            updateAllocatedStock((List<SVMXC__Allocated_Stock__c>)newList, (Map<Id, SVMXC__Allocated_Stock__c>)oldMap);
+        }
+    }
+
+    public static void updateAllocatedStock(List<SVMXC__Allocated_Stock__c> newList, Map<Id, SVMXC__Allocated_Stock__c> oldMap) {
+        Set<Id> stockIds = new Set<Id>();
+
+        for (SVMXC__Allocated_Stock__c allocatedStock : newList) {
+            if (allocatedStock.SVMXC__Product_Stock__c != null && allocatedStock.SVMX_BD_Product__c == null) {
+                stockIds.add(allocatedStock.SVMXC__Product_Stock__c);
+            }
+        }
+
+        if (stockIds.isEmpty()) {
+            return;
+        }
+
+        Map<Id, SVMXC__Product_Stock__c> stockMap = new Map<Id, SVMXC__Product_Stock__c>([
+            SELECT Id, SVMXC__Product__c
+            FROM SVMXC__Product_Stock__c
+            WHERE Id IN :stockIds
+        ]);
+
+        for (SVMXC__Allocated_Stock__c allocatedStock : newList) {
+            if (allocatedStock.SVMXC__Product_Stock__c != null && allocatedStock.SVMX_BD_Product__c == null) {
+                SVMXC__Product_Stock__c stock = stockMap.get(allocatedStock.SVMXC__Product_Stock__c);
+                if (stock != null) {
+                    allocatedStock.SVMX_BD_Product__c = stock.SVMXC__Product__c;
+                }
+            }
+        }
+    }
+
+    public static void productStockReconciliation(List<SVMXC__Product_Stock__c> newList, Map<Id, SVMXC__Product_Stock__c> oldMap) {
+        List<Id> updatedStonks = new List<Id>();
+
+        for (SVMXC__Product_Stock__c ps : newList) {
+            SVMXC__Product_Stock__c old = oldMap.get(ps.Id);
+
+            if (old.SVMX_BD_Inventoried_Qty__c != ps.SVMX_BD_Inventoried_Qty__c) {
+                updatedStonks.add(ps.Id);
+            }
+        }
+
+        if (!updatedStonks.isEmpty()) {
+            productStockReconciliation_future(updatedStonks);
+        }
+    }
+
+    public static void productStockReconciliation_future(List<Id> stonkIds) {
+        List<SVMXC__Product_Stock__c> stonks = [
+            SELECT Id,
+                   SVMX_BD_Inventoried_Qty__c,
+                   SVMXC__Quantity2__c,
+                   SVMXC__Location__c,
+                   SVMXC__Product__c
+            FROM SVMXC__Product_Stock__c
+            WHERE Id IN :stonkIds
+        ];
+
+        List<SVMXC__Stock_Adjustment__c> stockChanges = new List<SVMXC__Stock_Adjustment__c>();
+
+        for (SVMXC__Product_Stock__c ps : stonks) {
+            if (ps.SVMX_BD_Inventoried_Qty__c == null) {
+                continue;
+            }
+
+            Decimal oldQty = ps.SVMXC__Quantity2__c == null ? 0 : ps.SVMXC__Quantity2__c;
+
+            SVMXC__Stock_Adjustment__c dummyAdj = new SVMXC__Stock_Adjustment__c(
+                SVMXC__Posted_To_Inventory__c = true,
+                SVMXC__New_Quantity2__c = ps.SVMX_BD_Inventoried_Qty__c,
+                SVMXC__Old_Quantity2__c = ps.SVMXC__Quantity2__c,
+                SVMXC__Product__c = ps.SVMXC__Product__c,
+                SVMXC__Location__c = ps.SVMXC__Location__c,
+                SVMXC__Adjustment_Type__c = 'Physical Inventory'
+            );
+
+            stockChanges.add(dummyAdj);
+
+            if (ps.SVMX_BD_Inventoried_Qty__c >= 0) {
+                ps.SVMXC__Quantity2__c = ps.SVMX_BD_Inventoried_Qty__c;
+            } else {
+                ps.SVMXC__Quantity2__c = 0;
+            }
+
+            ps.SVMX_BD_Inventoried_Qty__c = null;
+        }
+
+        insert stockChanges;
+        update stonks;
+    }
+
+    public static void productStockExternalId(List<SVMXC__Product_Stock__c> newList) {
+        List<SVMXC__Product_Stock__c> psToUpdate;
+        Map<Id, Id> productIdMap;
+        Map<Id, Id> locationIdMap;
+        Map<Id, Product2> prodMap;
+        Map<Id, SVMXC__Site__c> locMap;
+
+        for (SVMXC__Product_Stock__c ps : newList) {
+            if (ps.SVMX_BD_External_ID__c == null) {
+                if (psToUpdate == null) psToUpdate = new List<SVMXC__Product_Stock__c>();
+                if (productIdMap == null) productIdMap = new Map<Id, Id>();
+                if (locationIdMap == null) locationIdMap = new Map<Id, Id>();
+
+                psToUpdate.add(ps);
+                locationIdMap.put(ps.Id, ps.SVMXC__Location__c);
+                productIdMap.put(ps.Id, ps.SVMXC__Product__c);
+            }
+        }
+
+        if (psToUpdate == null) {
+            return;
+        }
+
+        locMap = new Map<Id, SVMXC__Site__c>([
+            SELECT Id, Name, SVMX_BD_External_Id__c
+            FROM SVMXC__Site__c
+            WHERE Id IN :locationIdMap.values()
+        ]);
+
+        prodMap = new Map<Id, Product2>([
+            SELECT Id, Name, SVMX_PS_External_ID__c
+            FROM Product2
+            WHERE Id IN :productIdMap.values()
+        ]);
+
+        // AM CHANGE START - added null checks to prevent NullPointerException on line 346
+        for (SVMXC__Product_Stock__c ps : psToUpdate) {
+            SVMXC__Site__c loc = locMap.get(ps.SVMXC__Location__c);
+            Product2 prod = prodMap.get(ps.SVMXC__Product__c);
+
+            if (
+                loc == null ||
+                prod == null ||
+                String.isBlank(loc.SVMX_BD_External_Id__c) ||
+                String.isBlank(prod.SVMX_PS_External_ID__c) ||
+                String.isBlank(ps.SVMXC__Status__c)
+            ) {
+                System.debug('AM CHANGE: Skipping Product Stock external id creation because required data is missing. ProductStock=' + ps);
+                continue;
+            }
+
+            ps.SVMX_BD_External_ID__c =
+                loc.SVMX_BD_External_Id__c + '-' +
+                prod.SVMX_PS_External_ID__c + '-' +
+                ps.SVMXC__Status__c;
+        }
+        // AM CHANGE END
+    }
+}
