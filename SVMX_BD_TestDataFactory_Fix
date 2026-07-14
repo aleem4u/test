@@ -1,0 +1,281 @@
+Replace only this method in SVMX_BD_TestDataFactory:
+
+public static List<SVMXC__PM_History__c> createPMHistories(Integer numPMHistories, Boolean withVisitType)
+
+with the version below.
+
+public static List<SVMXC__PM_History__c> createPMHistories(Integer numPMHistories, Boolean withVisitType)
+{
+    // ============================================================================
+    // AM CHANGE START
+    // Reason:
+    // Added LIMIT 1 to make BusinessHours query safer.
+    // Original code:
+    // BusinessHours DEFAULT_BH = [SELECT Id, TimeZoneSidKey, IsActive FROM BusinessHours WHERE IsDefault = true];
+    // ============================================================================
+    BusinessHours DEFAULT_BH = [
+        SELECT Id, TimeZoneSidKey, IsActive
+        FROM BusinessHours
+        WHERE IsDefault = true
+        LIMIT 1
+    ];
+    // ============================================================================
+    // AM CHANGE END
+    // ============================================================================
+
+    List<SVMXC__PM_History__c> pmHistories = new List<SVMXC__PM_History__c>();
+
+    if(numPMHistories != null && numPMHistories > 0) {
+
+        // Create Contact
+        List<Contact> contacts = createContacts(1);
+
+        // Create Account
+        Account acct = new Account(
+                Name = 'Test Account',
+                BillingStreet = '123 Test Lane',
+                BillingCity = 'Houston',
+                BillingState = 'TX',
+                BillingPostalCode = '77070',
+                BillingCountry = 'United States',
+                SVMXC__Access_Hours__c = DEFAULT_BH.Id,
+                SVMX_PS_Contact__c = contacts[0].Id
+        );
+        System.debug('Inserting Account: ' + acct);
+        insert acct;
+
+        // ============================================================================
+        // AM CHANGE START
+        // Reason:
+        // Added Site/Location because PM History / PM Plan / Work Order logic may need
+        // location context to correctly update the Work Order.
+        // ============================================================================
+        SVMXC__Site__c site = new SVMXC__Site__c(
+                Name = 'AM Test Site PM History',
+                SVMXC__Account__c = acct.Id,
+                SVMX_BD_External_Id__c = 'AM-PM-HISTORY-SITE'
+        );
+        System.debug('AM DEBUG - Inserting Site: ' + site);
+        insert site;
+        // ============================================================================
+        // AM CHANGE END
+        // ============================================================================
+
+        // Create Service Levels
+        List<SVMXC__Service_Level__c> serviceLevels = new List<SVMXC__Service_Level__c>{
+            new SVMXC__Service_Level__c(
+                Name = 'Test Annual',
+                SVMXC__Active__c = true,
+                BD_Site_Account__c = acct.Id,
+                SVMX_PS_Visit_Type__c = 'Annual',
+                SVMXC__Business_Hours__c = DEFAULT_BH.Id,
+                BD_Order_Type__c = 'Preventive Maintenance'
+            ),
+            new SVMXC__Service_Level__c(
+                Name = 'Test Semi-Annual',
+                SVMXC__Active__c = true,
+                BD_Site_Account__c = acct.Id,
+                SVMX_PS_Visit_Type__c = 'Semi-Annual',
+                SVMXC__Business_Hours__c = DEFAULT_BH.Id,
+                BD_Order_Type__c = 'Preventive Maintenance'
+            ),
+            new SVMXC__Service_Level__c(
+                Name = 'Test Quarterly',
+                SVMXC__Active__c = true,
+                BD_Site_Account__c = acct.Id,
+                SVMX_PS_Visit_Type__c = 'Quarterly',
+                SVMXC__Business_Hours__c = DEFAULT_BH.Id,
+                BD_Order_Type__c = 'Preventive Maintenance'
+            ),
+            new SVMXC__Service_Level__c(
+                Name = 'Test Monthly',
+                SVMXC__Active__c = true,
+                BD_Site_Account__c = acct.Id,
+                SVMX_PS_Visit_Type__c = 'Monthly',
+                SVMXC__Business_Hours__c = DEFAULT_BH.Id,
+                BD_Order_Type__c = 'Preventive Maintenance'
+            ),
+            new SVMXC__Service_Level__c(
+                Name = 'Test Weekly',
+                SVMXC__Active__c = true,
+                BD_Site_Account__c = acct.Id,
+                SVMX_PS_Visit_Type__c = 'Weekly',
+                SVMXC__Business_Hours__c = DEFAULT_BH.Id,
+                BD_Order_Type__c = 'Preventive Maintenance'
+            )
+        };
+        System.debug('Inserting Service Level list: ' + serviceLevels);
+        insert serviceLevels;
+
+        // Create Work Orders
+        List<SVMXC__Service_Order__c> wos = new List<SVMXC__Service_Order__c>();
+
+        for(Integer i=0; i<numPMHistories; i++)
+        {
+            SVMXC__Service_Order__c wo = new SVMXC__Service_Order__c(
+                    // ============================================================================
+                    // AM CHANGE START
+                    // Reason:
+                    // Added Subject so the Work Order has a clear test identifier.
+                    // ============================================================================
+                    SVMX_PS_Subject__c = 'AM Test PM Work Order ' + i,
+                    // ============================================================================
+                    // AM CHANGE END
+                    // ============================================================================
+
+                    SVMXC__Company__c = acct.Id,
+                    SVMXC__Order_Type__c = 'Preventive Maintenance',
+                    SVMXC__Is_SLA_Calculated__c = false,
+
+                    // ============================================================================
+                    // AM CHANGE START
+                    // Reason:
+                    // Original code used blank string.
+                    // For lookup/picklist style processing, null is safer and cleaner.
+                    //
+                    // Original code:
+                    // SVMX_PS_Visit_Type__c = '',
+                    // ============================================================================
+                    SVMX_PS_Visit_Type__c = null,
+                    // ============================================================================
+                    // AM CHANGE END
+                    // ============================================================================
+
+                    SVMXC__SLA_Terms__c = null,
+                    SVMX_PS_Assign_to_WorkGroup__c = false,
+                    SVMXC__Order_Status__c = 'New',
+
+                    // ============================================================================
+                    // AM CHANGE START
+                    // Reason:
+                    // Added Site/Location to Work Order so PM History logic has complete context.
+                    // If this field API name does not exist in your org, comment this line out.
+                    // ============================================================================
+                    SVMXC__Site__c = site.Id
+                    // ============================================================================
+                    // AM CHANGE END
+                    // ============================================================================
+            );
+
+            wos.add(wo);
+        }
+
+        System.debug('Inserting Work Order list: ' + wos);
+        insert wos;
+
+
+        // Create a PM Plan to be used by the PM Schedule Definition
+
+        // ============================================================================
+        // AM CHANGE START
+        // Reason:
+        // Original PM Plan only had Name and Account.
+        // That was incomplete for PM History logic and did not give the trigger enough
+        // information to update Work Order fields such as Visit Type, SLA Terms,
+        // Assign to Work Group, and Order Status.
+        //
+        // Original code:
+        /*
+        SVMXC__PM_Plan__c pmPlan = new SVMXC__PM_Plan__c(
+                Name = 'Test PM Plan', SVMXC__Account__c = acct.Id
+        );
+        */
+        // ============================================================================
+        SVMXC__PM_Plan__c pmPlan = new SVMXC__PM_Plan__c(
+                Name = 'Test PM Plan',
+                SVMXC__Account__c = acct.Id,
+                SVMXC__Location__c = site.Id,
+                SVMXC__Status__c = 'Active',
+                SVMXC__Start_Date__c = Date.today().addDays(-30),
+                SVMXC__End_Date__c = Date.today().addYears(1)
+        );
+        // ============================================================================
+        // AM CHANGE END
+        // ============================================================================
+
+        System.debug('Inserting PM Plan: ' + pmPlan);
+        insert pmPlan;
+
+        // Create PM Schedule Definitions
+        List<SVMXC__PM_Schedule_Definition__c> pmSchedDefs = new List<SVMXC__PM_Schedule_Definition__c>();
+
+        for(Integer i=0; i<numPMHistories; i++)
+        {
+            if(withVisitType)
+            {
+                SVMXC__PM_Schedule_Definition__c pmSchedDef = new SVMXC__PM_Schedule_Definition__c(
+                        SVMX_PS_Visit_Type__c = 'Monthly',
+                        SVMXC__PM_Plan__c = pmPlan.Id
+                );
+                pmSchedDefs.add(pmSchedDef);
+            } else
+            {
+                SVMXC__PM_Schedule_Definition__c pmSchedDef = new SVMXC__PM_Schedule_Definition__c(
+                        // ============================================================================
+                        // AM CHANGE START
+                        // Reason:
+                        // Original code used blank string.
+                        // Null better represents "no visit type" for the negative test scenario.
+                        //
+                        // Original code:
+                        // SVMX_PS_Visit_Type__c = '',
+                        // ============================================================================
+                        SVMX_PS_Visit_Type__c = null,
+                        // ============================================================================
+                        // AM CHANGE END
+                        // ============================================================================
+
+                        SVMXC__PM_Plan__c = pmPlan.Id
+                );
+                pmSchedDefs.add(pmSchedDef);
+            }
+        }
+
+        System.debug('Inserting PM Schedule Definition list: ' + pmSchedDefs);
+        insert pmSchedDefs;
+
+
+        // Create PM Histories
+        for(Integer i=0; i<numPMHistories; i++)
+        {
+            SVMXC__PM_History__c pmHistory = new SVMXC__PM_History__c(
+                    SVMXC__Work_Order__c = wos[i].Id,
+                    SVMXC__PM_Schedule_Definition__c = pmSchedDefs[i].Id,
+                    SVMXC__PM_Plan__c = pmPlan.Id
+            );
+
+            pmHistories.add(pmHistory);
+        }
+
+        System.debug('Inserting PM History list: ' + pmHistories);
+        insert pmHistories;
+
+        // ============================================================================
+        // AM CHANGE START
+        // Reason:
+        // Re-query PM Histories before returning so the calling test receives committed
+        // records with Ids and relationships confirmed.
+        // ============================================================================
+        Set<Id> pmHistoryIds = new Set<Id>();
+
+        for (SVMXC__PM_History__c pmHistory : pmHistories) {
+            pmHistoryIds.add(pmHistory.Id);
+        }
+
+        pmHistories = [
+            SELECT Id,
+                   Name,
+                   SVMXC__Work_Order__c,
+                   SVMXC__PM_Schedule_Definition__c,
+                   SVMXC__PM_Plan__c
+            FROM SVMXC__PM_History__c
+            WHERE Id IN :pmHistoryIds
+        ];
+        // ============================================================================
+        // AM CHANGE END
+        // ============================================================================
+    }
+
+    System.debug('Returning PM Histories: ' + pmHistories);
+    return pmHistories;
+}
