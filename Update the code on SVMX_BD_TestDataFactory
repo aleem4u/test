@@ -1,34 +1,438 @@
-// Create a PM Plan to be used by the PM Schedule Definition
+Testdatafactory · CLS
+/**
+ * Created by tony on 10/29/19.
+ */
+ 
+@IsTest
+public class SVMX_BD_TestDataFactory {
+ 
+    public static void createTestData()
+    {
+        // Create Public Groups
+        Integer numGroups = 3;
+        List<Group> publicGroups = new List<Group>();
+ 
+        for(Integer i=0; i<numGroups; i++)
+        {
+            Group publicGroup = new Group(
+                    Name = 'TestGroup' + i,
+                    DeveloperName = 'TestGroup' + i,
+                    Type = 'Regular'
+            );
+ 
+            publicGroups.add(publicGroup);
+        }
+        insert publicGroups;
+        System.debug('publicGroups list: ' + publicGroups);
+ 
+ 
+        // Create Roles
+        User thisUser = [SELECT Id FROM User WHERE Id = :UserInfo.getUserId()];
+        System.runAs(thisUser)
+        {
+            Integer numRoles = 4;
+            List<UserRole> roles = new List<UserRole>();
+            String developerName;
+ 
+            for(Integer i=0; i<numRoles; i++)
+            {
+                developerName = i < 2 ? 'TestCustomerCommunityRole' + i : 'TestPartnerCommunityRole' + i;
+                UserRole role = new UserRole(
+                        Name = developerName,
+                        DeveloperName = developerName
+                        //, Type = 'Role'
+                );
+                roles.add(role);
+            }
+            insert roles;
+            System.debug('roles list: ' + roles);
+        }
+ 
+        // Create Contacts
+        List<Contact> contacts = createContacts(3);
+ 
+        // Create Accounts
+        Integer numAccounts = 3;
+        String sitePublicGroupName;
+        String customerCommunityRoleName;
+        String partnerCommunityRoleName;
+        List<Account> accounts = new List<Account>();
+        for(Integer i=0; i<numAccounts; i++)
+        {
+            sitePublicGroupName = i == 0 ? 'TestGroup0' : null;
+            customerCommunityRoleName = i == 0 ? 'TestCustomerCommunityRole0' : null;
+            partnerCommunityRoleName = i == 0 ? 'TestPartnerCommunityRole2' : null;
+            Account account = new Account(
+                    Name = 'TestAccount' + i,
+                    // RecordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByDeveloperName().get('Site').getRecordTypeId(),
+                    BD_Site_Public_Group_Name__c = sitePublicGroupName,
+                    BD_Customer_Community_Role_Name__c = customerCommunityRoleName,
+                    BD_Partner_Community_Role_Name__c = partnerCommunityRoleName,
+                    BillingStreet = '123 Test Lane',
+                    BillingCity = 'Paris',
+                    BillingState = 'TX',
+                    BillingPostalCode = '75460',
+                    BillingCountry = 'United States',
+                    SVMX_PS_Contact__c = contacts[i].Id
+            );
+ 
+            accounts.add(account);
+        }
+        insert accounts;
+        System.debug('accounts list: ' + accounts);
+ 
+ 
+        // Update Account
+        accounts[1].BD_Site_Public_Group_Name__c = 'TestGroup1';
+        accounts[1].BD_Customer_Community_Role_Name__c = 'TestCustomerCommunityRole1';
+        accounts[1].BD_Partner_Community_Role_Name__c = 'TestPartnerCommunityRole3';
+        update accounts[1];
+        System.debug('Updated account Group Id Names: ' + accounts[1]);
+ 
+ 
+        // Create Locations
+        Integer numLocations = 3;
+        List<SVMXC__Site__c> locations = new List<SVMXC__Site__c>();
+        Boolean tempStockingLocation = false;
+        Id tempAccount;
+        for(Integer i=0; i<numLocations; i++)
+        {
+            tempStockingLocation = i == 0 ? true : false;
+            SVMXC__Site__c location = new SVMXC__Site__c(
+                    Name = 'TestLocation' + i,
+                    SVMXC__Account__c = accounts[i].Id,
+                    // 6/29/2020 tony - changed to allow for both stocking and non-stocking locations
+                    SVMXC__Stocking_Location__c = tempStockingLocation
+            );
+ 
+            locations.add(location);
+        }
+        insert locations;
+        System.debug('locations list: '+ locations);
+ 
+        // create product
+        Product2 p1 = new Product2(Name = 'p1', SVMXC__Stockable__c = true, SVMX_PS_External_ID__c = 'p1');
+        insert p1;
+ 
+        // Create Installed Products
+        Integer numInstalledProducts = 3;
+        List<SVMXC__Installed_Product__c> installedProducts = new List<SVMXC__Installed_Product__c>();
+        for(Integer i=0; i<numInstalledProducts; i++)
+        {
+            SVMXC__Installed_Product__c installedProduct = new SVMXC__Installed_Product__c(
+                    Name = 'TestInstalledProduct' + i,
+                    SVMXC__Company__c = accounts[i].Id,
+                    SVMX_Frontec_Category__c = 'Electrical',
+                    SVMX_Frontec_Sub_Category__c = 'Distribution Panel',
+                    SVMXC__Product__c = p1.Id
+            );
+ 
+            installedProducts.add(installedProduct);
+        }
+        insert installedProducts;
+        System.debug('installedProducts list: '+ installedProducts);
+ 
+ 
+        // Create Service Teams
+        Integer numServiceTeams = 3;
+        List<SVMXC__Service_Group__c> serviceTeams = new List<SVMXC__Service_Group__c>();
+        for(Integer i=0; i<numServiceTeams; i++)
+        {
+            SVMXC__Service_Group__c serviceTeam = new SVMXC__Service_Group__c(
+                    Name = 'TestServiceTeam' + i,
+                    SVMX_Frontec_ServiceTeam_Account__c = accounts[i].Id
+            );
+ 
+            serviceTeams.add(serviceTeam);
+        }
+        insert serviceTeams;
+        System.debug('serviceTeams list: '+ serviceTeams);
+ 
+        // tony 12/10/2019 - Added for Code coverage even though we don't use this trigger event.
+        update serviceTeams;
+        System.debug('updated serviceTeams list: '+ serviceTeams);
+ 
+ 
+        // tony 6/25/2020 - Create Product Stock - for Apex Sharing/Batches requirement
+        Integer numProductStocks = 3;
+        List<SVMXC__Product_Stock__c> productStocks = new List<SVMXC__Product_Stock__c>();
+        for(Integer i=0; i<numProductStocks; i++)
+        {
+            SVMXC__Product_Stock__c productStock = new SVMXC__Product_Stock__c(
+                    //Name = 'TestProductStock' + i,
+                    SVMXC__ProdStockCompositeKey__c = 'TestProductStock' + i,
+                    //SVMXC__Partner_Account__c = accounts[i].Id
+                    SVMX_BD_Account__c = accounts[i].Id
+            );
+ 
+            productStocks.add(productStock);
+        }
+        insert productStocks;
+        System.debug('productStocks list: '+ productStocks);
+ 
+        // Added for Code coverage even though we don't use this trigger event.
+        update productStocks;
+        System.debug('updated productStocks list: '+ productStocks);
+ 
+        // tony 6/26/2020 - Create Parts Request - for Apex Sharing/Batches requirement
+        Integer numPartsRequest = 3;
+        List<SVMXC__Parts_Request__c> partsRequests = new List<SVMXC__Parts_Request__c>();
+        for(Integer i=0; i<numPartsRequest; i++)
+        {
+            SVMXC__Parts_Request__c partsRequest = new SVMXC__Parts_Request__c(
+                    //Name = 'TestPartsRequest' + i,
+                    SVMXC__Additional_Information__c = 'TestPartsRequest' + i,
+                    SVMXC__Requested_From__c = locations[0].Id,
+                    SVMX_BD_Account__c = accounts[i].Id
+            );
+ 
+            partsRequests.add(partsRequest);
+        }
+        insert partsRequests;
+        System.debug('partsRequests list: '+ partsRequests);
+ 
+        // Added for Code coverage even though we don't use this trigger event.
+        update partsRequests;
+        System.debug('updated partsRequests list: '+ partsRequests);
+ 
+        // tony 6/26/2020 - Create Stock Transfer - for Apex Sharing/Batches requirement
+        Integer numStockTransfer = 3;
+        List<SVMXC__Stock_Transfer__c> stockTransfers = new List<SVMXC__Stock_Transfer__c>();
+        for(Integer i=0; i<numStockTransfer; i++)
+        {
+            SVMXC__Stock_Transfer__c stockTransfer = new SVMXC__Stock_Transfer__c(
+                    //Name = 'TestProductStock' + i,
+                    SVMXC__Additional_Information__c = 'TestStockTransfer' + i,
+                    //SVMXC__Partner_Account__c =  accounts[i].Id,
+                    SVMXC__Source_Location__c = locations[0].Id,
+                    SVMX_BD_Account__c = accounts[i].Id
+            );
+ 
+            stockTransfers.add(stockTransfer);
+        }
+        insert stockTransfers;
+        System.debug('stockTransfers list: '+ stockTransfers);
+ 
+        // Added for Code coverage even though we don't use this trigger event.
+        update stockTransfers;
+        System.debug('updated stockTransfers list: '+ stockTransfers);
+ 
+ 
+        // tony 6/26/2020 - Create Proforma Invoice - for Apex Sharing/Batches requirement
+        Integer numProformaInvoice = 3;
+        List<SVMXC__Proforma_Invoice__c> proformaInvoices = new List<SVMXC__Proforma_Invoice__c>();
+        for(Integer i=0; i<numProformaInvoice; i++)
+        {
+            SVMXC__Proforma_Invoice__c proformaInvoice = new SVMXC__Proforma_Invoice__c(
+                    //Name = 'TestProductStock' + i,
+                    SVMXC__Cancelation_Notes__c = 'TestProformaInvoice' + i,
+                    SVMXC__Account__c = accounts[i].Id
+            );
+ 
+            proformaInvoices.add(proformaInvoice);
+        }
+        insert proformaInvoices;
+        System.debug('proformaInvoices list: '+ proformaInvoices);
+ 
+        // Added for Code coverage even though we don't use this trigger event.
+        update proformaInvoices;
+        System.debug('updated proformaInvoices list: '+ proformaInvoices);
+ 
+        // tony 6/30/2020 - Create PO Receipt - for Apex Sharing/Batches requirement
+        Integer numPOReceipt = 3;
+        List<SVMX_BD_PO_Receipt__c> poReceipts = new List<SVMX_BD_PO_Receipt__c>();
+        for(Integer i=0; i<numPOReceipt; i++)
+        {
+            SVMX_BD_PO_Receipt__c poReceipt = new SVMX_BD_PO_Receipt__c(
+                    //Name = 'TestProductStock' + i,
+                    //SVMXC__Cancelation_Notes__c = 'TestPOReceipt' + i,
+                    SVMX_BD_Account__c = accounts[i].Id
+            );
+ 
+            poReceipts.add(poReceipt);
+        }
+        insert poReceipts;
+        System.debug('poReceipts list: '+ poReceipts);
+ 
+        // Added for Code coverage even though we don't use this trigger event.
+        update poReceipts;
+        System.debug('updated poReceipts list: '+ poReceipts);
+ 
+ 
+        // Create Work Orders
+        Integer numWorkOrders = 3;
+        List<SVMXC__Service_Order__c> workOrders = new List<SVMXC__Service_Order__c>();
+        for(Integer i=0; i<numWorkOrders; i++)
+        {
+            SVMXC__Service_Order__c workOrder = new SVMXC__Service_Order__c(
+                    SVMX_PS_Subject__c = 'TestWorkOrder' + i,
+                    SVMXC__Company__c = accounts[i].Id
+            );
+ 
+            workOrders.add(workOrder);
+        }
+        insert workOrders;
+        System.debug('workOrders list: '+ workOrders);
+ 
+ 
+        // Create Preventive Maintenance Plans
+        Integer numPMPlans = 3;
+        List<SVMXC__PM_Plan__c> pmPlans = new List<SVMXC__PM_Plan__c>();
+        for(Integer i=0; i<numPMPlans; i++)
+        {
+            SVMXC__PM_Plan__c pmPlan = new SVMXC__PM_Plan__c(
+                    Name = 'TestPMPlan' + i,
+                    SVMXC__Account__c = accounts[i].Id
+            );
+ 
+            pmPlans.add(pmPlan);
+        }
+        insert pmPlans;
+        System.debug('pmPlans list: '+ pmPlans);
+ 
+        update pmPlans;
+        System.debug('Update pmPlans list: '+ pmPlans);
+    }
+ 
+    public static List<SVMXC__PM_History__c> createPMHistories(Integer numPMHistories, Boolean withVisitType)
+    {
+        BusinessHours DEFAULT_BH = [SELECT Id, TimeZoneSidKey, IsActive FROM BusinessHours WHERE IsDefault = true];
+ 
+        List<SVMXC__PM_History__c> pmHistories = new List<SVMXC__PM_History__c>();
+        if(numPMHistories != null && numPMHistories > 0) {
+ 
+            // Create Contact
+            List<Contact> contacts = createContacts(1);
+ 
+            // Create Account
+            Account acct = new Account(
+                    Name = 'Test Account',
+                    BillingStreet = '123 Test Lane',
+                    BillingCity = 'Houston',
+                    BillingState = 'TX',
+                    BillingPostalCode = '77070',
+                    BillingCountry = 'United States',
+                    SVMXC__Access_Hours__c = DEFAULT_BH.Id,
+                    SVMX_PS_Contact__c = contacts[0].Id
+            );
+            System.debug('Inserting Account: ' + acct);
+            insert acct;
+ 
+            // Create Service Levels
+            List<SVMXC__Service_Level__c> serviceLevels = new List<SVMXC__Service_Level__c>{
+                new SVMXC__Service_Level__c(Name = 'Test Annual', SVMXC__Active__c = true, BD_Site_Account__c = acct.Id,
+                    SVMX_PS_Visit_Type__c = 'Annual', SVMXC__Business_Hours__c = DEFAULT_BH.Id, BD_Order_Type__c = 'Preventive Maintenance'),
+                new SVMXC__Service_Level__c(Name = 'Test Semi-Annual', SVMXC__Active__c = true, BD_Site_Account__c = acct.Id,
+                    SVMX_PS_Visit_Type__c = 'Semi-Annual', SVMXC__Business_Hours__c = DEFAULT_BH.Id, BD_Order_Type__c = 'Preventive Maintenance'),
+                new SVMXC__Service_Level__c(Name = 'Test Quarterly', SVMXC__Active__c = true, BD_Site_Account__c = acct.Id,
+                    SVMX_PS_Visit_Type__c = 'Quarterly', SVMXC__Business_Hours__c = DEFAULT_BH.Id, BD_Order_Type__c = 'Preventive Maintenance'),
+                new SVMXC__Service_Level__c(Name = 'Test Monthly', SVMXC__Active__c = true, BD_Site_Account__c = acct.Id,
+                    SVMX_PS_Visit_Type__c = 'Monthly', SVMXC__Business_Hours__c = DEFAULT_BH.Id, BD_Order_Type__c = 'Preventive Maintenance'),
+                new SVMXC__Service_Level__c(Name = 'Test Weekly', SVMXC__Active__c = true, BD_Site_Account__c = acct.Id,
+                    SVMX_PS_Visit_Type__c = 'Weekly', SVMXC__Business_Hours__c = DEFAULT_BH.Id, BD_Order_Type__c = 'Preventive Maintenance')
+            };
+            System.debug('Inserting Service Level list: ' + serviceLevels);
+            insert serviceLevels;
+ 
+            // Create Work Orders
+            List<SVMXC__Service_Order__c> wos = new List<SVMXC__Service_Order__c>();
+            for(Integer i=0; i<numPMHistories; i++)
+            {
+                SVMXC__Service_Order__c wo = new SVMXC__Service_Order__c(
+                        SVMXC__Company__c = acct.Id,
+                        SVMXC__Order_Type__c = 'Preventive Maintenance',
+                        SVMXC__Is_SLA_Calculated__c = false,
+                        SVMX_PS_Visit_Type__c = '',
+                        SVMXC__SLA_Terms__c = null,
+                        SVMX_PS_Assign_to_WorkGroup__c = false,
+                        SVMXC__Order_Status__c = 'New'
+                );
+ 
+                wos.add(wo);
+            }
+ 
+            System.debug('Inserting Work Order list: ' + wos);
+            insert wos;
+ 
+ 
+            // Create a PM Plan to be used by the PM Schedule Definition
             SVMXC__PM_Plan__c pmPlan = new SVMXC__PM_Plan__c(
                     Name = 'Test PM Plan', SVMXC__Account__c = acct.Id
             );
             System.debug('Inserting PM Plan: ' + pmPlan);
             insert pmPlan;
-
-            // AM 2026-07-15: Added Task Template creation. The "PM Schedule Definition - Update Visit Type"
-            // flow overwrites SVMX_PS_Visit_Type__c on the PM Schedule Definition using
-            // Work_Order_Purpose__r.SVMX_Frontec_Type_of_Visit__c, so Visit Type must be driven
-            // through a related Task Template record rather than set directly on the schedule definition.
+ 
+            // AM 2026-07-15: Added Task Template (SVMXC__Task_Template__c) creation.
+            // Root cause: the "PM Schedule Definition - Update Visit Type" flow runs unconditionally
+            // (no entry/filter conditions) on every insert/update of SVMXC__PM_Schedule_Definition__c
+            // and overwrites SVMX_PS_Visit_Type__c with the value from
+            // {!$Record.SVMXC__Work_Order_Purpose__r.SVMX_Frontec_Type_of_Visit__c}.
+            // Setting SVMX_PS_Visit_Type__c directly on the PM Schedule Definition record (old approach)
+            // was therefore always overwritten to null immediately after insert, since
+            // SVMXC__Work_Order_Purpose__c was never populated. Visit Type must instead be driven
+            // through a related Task Template record.
             SVMXC__Task_Template__c taskTemplate = new SVMXC__Task_Template__c(
                     SVMX_Frontec_Type_of_Visit__c = withVisitType ? 'Monthly' : ''
             );
             System.debug('AM: Inserting Task Template: ' + taskTemplate);
             insert taskTemplate;
-
+ 
             // Create PM Schedule Definitions
-            // AM 2026-07-15: Removed direct SVMX_PS_Visit_Type__c assignment (was being overwritten
-            // by the flow anyway); now linking to Task Template via SVMXC__Work_Order_Purpose__c instead.
+            // AM 2026-07-15: Removed direct SVMX_PS_Visit_Type__c assignment (was being silently
+            // overwritten to null by the flow described above). Now linking to the Task Template via
+            // SVMXC__Work_Order_Purpose__c so the flow resolves Visit Type correctly on insert.
             List<SVMXC__PM_Schedule_Definition__c> pmSchedDefs = new List<SVMXC__PM_Schedule_Definition__c>();
             for(Integer i=0; i<numPMHistories; i++)
             {
                 SVMXC__PM_Schedule_Definition__c pmSchedDef = new SVMXC__PM_Schedule_Definition__c(
-                        SVMXC__Work_Order_Purpose__c = taskTemplate.Id,
+                        SVMXC__Work_Order_Purpose__c = taskTemplate.Id, // AM: drives Visit Type via flow
                         SVMXC__PM_Plan__c = pmPlan.Id
                 );
                 pmSchedDefs.add(pmSchedDef);
             }
-
+ 
             System.debug('Inserting PM Schedule Definition list: ' + pmSchedDefs);
             insert pmSchedDefs;
-Nothing else in the file needs to change — the PM History creation block right below this stays exactly the same, since it still just references pmSchedDefs[i].Id.
-After saving, re-run all three test methods in SVMX_BD_PMHistoryTest and paste the results here.
+ 
+ 
+            // Create PM Histories
+            for(Integer i=0; i<numPMHistories; i++)
+            {
+                SVMXC__PM_History__c pmHistory = new SVMXC__PM_History__c(
+                        SVMXC__Work_Order__c = wos[i].Id,
+                        SVMXC__PM_Schedule_Definition__c = pmSchedDefs[i].Id,
+                        SVMXC__PM_Plan__c = pmPlan.Id
+                );
+ 
+                pmHistories.add(pmHistory);
+            }
+ 
+            System.debug('Inserting PM History list: ' + pmHistories);
+            insert pmHistories;
+        }
+ 
+        System.debug('Returning PM Histories: ' + pmHistories);
+        return pmHistories;
+    }
+ 
+    public static List<Contact> createContacts(Integer numContacts)
+    {
+        // Create Contacts
+        List<Contact> contacts = new List<Contact>();
+        for(Integer i=0; i<numContacts; i++)
+        {
+            Contact contact = new Contact(
+                    FirstName = 'Test',
+                    LastName = 'Contact' + i,
+                    Email = 'TestEmail' + i + '@test.com'
+            );
+ 
+            contacts.add(contact);
+        }
+ 
+        insert contacts;
+        System.debug('contacts list: '+ contacts);
+        return contacts;
+    }
+ 
+}
