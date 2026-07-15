@@ -1,0 +1,20 @@
+// Create Task Template record with the visit type (drives Visit Type via flow)
+SVMXC__Task_Template__c taskTemplate = new SVMXC__Task_Template__c(
+    SVMX_Frontec_Type_of_Visit__c = withVisitType ? 'Monthly' : ''
+);
+System.debug('Inserting Task Template: ' + taskTemplate);
+insert taskTemplate;
+
+// Create PM Schedule Definitions
+List<SVMXC__PM_Schedule_Definition__c> pmSchedDefs = new List<SVMXC__PM_Schedule_Definition__c>();
+for(Integer i=0; i<numPMHistories; i++)
+{
+    SVMXC__PM_Schedule_Definition__c pmSchedDef = new SVMXC__PM_Schedule_Definition__c(
+            SVMXC__Work_Order_Purpose__c = taskTemplate.Id,
+            SVMXC__PM_Plan__c = pmPlan.Id
+    );
+    pmSchedDefs.add(pmSchedDef);
+}
+
+System.debug('Inserting PM Schedule Definition list: ' + pmSchedDefs);
+insert pmSchedDefs;
