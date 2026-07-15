@@ -1,20 +1,34 @@
-// Create Task Template record with the visit type (drives Visit Type via flow)
-SVMXC__Task_Template__c taskTemplate = new SVMXC__Task_Template__c(
-    SVMX_Frontec_Type_of_Visit__c = withVisitType ? 'Monthly' : ''
-);
-System.debug('Inserting Task Template: ' + taskTemplate);
-insert taskTemplate;
+// Create a PM Plan to be used by the PM Schedule Definition
+            SVMXC__PM_Plan__c pmPlan = new SVMXC__PM_Plan__c(
+                    Name = 'Test PM Plan', SVMXC__Account__c = acct.Id
+            );
+            System.debug('Inserting PM Plan: ' + pmPlan);
+            insert pmPlan;
 
-// Create PM Schedule Definitions
-List<SVMXC__PM_Schedule_Definition__c> pmSchedDefs = new List<SVMXC__PM_Schedule_Definition__c>();
-for(Integer i=0; i<numPMHistories; i++)
-{
-    SVMXC__PM_Schedule_Definition__c pmSchedDef = new SVMXC__PM_Schedule_Definition__c(
-            SVMXC__Work_Order_Purpose__c = taskTemplate.Id,
-            SVMXC__PM_Plan__c = pmPlan.Id
-    );
-    pmSchedDefs.add(pmSchedDef);
-}
+            // AM 2026-07-15: Added Task Template creation. The "PM Schedule Definition - Update Visit Type"
+            // flow overwrites SVMX_PS_Visit_Type__c on the PM Schedule Definition using
+            // Work_Order_Purpose__r.SVMX_Frontec_Type_of_Visit__c, so Visit Type must be driven
+            // through a related Task Template record rather than set directly on the schedule definition.
+            SVMXC__Task_Template__c taskTemplate = new SVMXC__Task_Template__c(
+                    SVMX_Frontec_Type_of_Visit__c = withVisitType ? 'Monthly' : ''
+            );
+            System.debug('AM: Inserting Task Template: ' + taskTemplate);
+            insert taskTemplate;
 
-System.debug('Inserting PM Schedule Definition list: ' + pmSchedDefs);
-insert pmSchedDefs;
+            // Create PM Schedule Definitions
+            // AM 2026-07-15: Removed direct SVMX_PS_Visit_Type__c assignment (was being overwritten
+            // by the flow anyway); now linking to Task Template via SVMXC__Work_Order_Purpose__c instead.
+            List<SVMXC__PM_Schedule_Definition__c> pmSchedDefs = new List<SVMXC__PM_Schedule_Definition__c>();
+            for(Integer i=0; i<numPMHistories; i++)
+            {
+                SVMXC__PM_Schedule_Definition__c pmSchedDef = new SVMXC__PM_Schedule_Definition__c(
+                        SVMXC__Work_Order_Purpose__c = taskTemplate.Id,
+                        SVMXC__PM_Plan__c = pmPlan.Id
+                );
+                pmSchedDefs.add(pmSchedDef);
+            }
+
+            System.debug('Inserting PM Schedule Definition list: ' + pmSchedDefs);
+            insert pmSchedDefs;
+Nothing else in the file needs to change — the PM History creation block right below this stays exactly the same, since it still just references pmSchedDefs[i].Id.
+After saving, re-run all three test methods in SVMX_BD_PMHistoryTest and paste the results here.
