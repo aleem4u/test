@@ -1,0 +1,88 @@
+/**
+ * AM 2026-07-15: Created to provide 100% code coverage for the SVMX_PM_History trigger.
+ * This trigger is separate from SVMX_BD_PM_History (handled by SVMX_BD_PMHistoryTriggerHandler)
+ * but runs on the same object (SVMXC__PM_History__c, after insert) and independently
+ * calculates SLA fields on the related Work Order (SVMXC__Is_SLA_Calculated__c, SVMXC__SLA_Terms__c).
+ */
+@IsTest
+private class SVMX_PM_HistoryTest {
+
+	/**
+	 * AM: Covers the "happy path" - a PM History inserted with both a Work Order and a
+	 * PM Schedule Definition populated, where the Schedule Definition has a Visit Type set.
+	 * This exercises:
+	 *  - population of woIds/scheduleDefIds/historyToUpdate
+	 *  - the woMap/sdMap/allServiceLevels SOQL queries
+	 *  - the main "wo != null && schedDef != null && Visit Type != null" branch
+	 *  - the inner Service Level matching loop (including the containsIgnoreCase match + break)
+	 *  - the final update of woUpdates
+	 */
+	@IsTest
+	static void testSLACalculationHappyPath()
+	{
+		Test.startTest();
+		SVMXC__PM_History__c[] pmHistories = SVMX_BD_TestDataFactory.createPMHistories(1, true);
+		Test.stopTest();
+
+		Set<Id> wOrderIds = new Set<Id>();
+		for (SVMXC__PM_History__c pmHistory : pmHistories)
+		{
+			if (pmHistory.SVMXC__Work_Order__c != null)
+			{
+				wOrderIds.add(pmHistory.SVMXC__Work_Order__c);
+			}
+		}
+
+		List<SVMXC__Service_Order__c> wOrders = [
+				SELECT  Id,
+						SVMXC__Is_SLA_Calculated__c,
+						SVMXC__SLA_Terms__c,
+						SVMX_PS_Visit_Type__c
+				FROM SVMXC__Service_Order__c
+				WHERE Id IN :wOrderIds
+		];
+
+		System.assertEquals(1, wOrders.size(), 'Expected 1 Work Order.');
+		System.assertEquals(true, wOrders[0].SVMXC__Is_SLA_Calculated__c, 'SLA should be marked as calculated.');
+		System.assertEquals('Monthly', wOrders[0].SVMX_PS_Visit_Type__c, 'Visit Type should be Monthly.');
+		System.assertNotEquals(null, wOrders[0].SVMXC__SLA_Terms__c, 'A matching Service Level should have been found and set.');
+	}
+
+	/**
+	 * AM: Covers the early-return branch - "if (woIds.isEmpty()) { return; }".
+	 * Every other test always populates both SVMXC__Work_Order__c and
+	 * SVMXC__PM_Schedule_Definition__c on the PM History record, so woIds is never empty.
+	 * This test inserts a PM History with neither lookup populated, forcing woIds to stay
+	 * empty and the trigger to return before running any SOQL/DML.
+	 */
+	@IsTest
+	static void testNoWorkOrderOrScheduleDefinitionAssociation()
+	{
+		Account acct = new Account(
+				Name = 'Test Account No Association',
+				BillingStreet = '123 Test Lane',
+				BillingCity = 'Houston',
+				BillingState = 'TX',
+				BillingPostalCode = '77070',
+				BillingCountry = 'United States'
+		);
+		insert acct;
+
+		SVMXC__PM_Plan__c pmPlan = new SVMXC__PM_Plan__c(
+				Name = 'Test PM Plan No Association',
+				SVMXC__Account__c = acct.Id
+		);
+		insert pmPlan;
+
+		Test.startTest();
+		// Neither SVMXC__Work_Order__c nor SVMXC__PM_Schedule_Definition__c is set here,
+		// so the trigger's woIds set remains empty and hits the early return.
+		SVMXC__PM_History__c pmHistory = new SVMXC__PM_History__c(
+				SVMXC__PM_Plan__c = pmPlan.Id
+		);
+		insert pmHistory;
+		Test.stopTest();
+
+		System.assertNotEquals(null, pmHistory.Id, 'PM History record should have inserted successfully even without an associated Work Order or Schedule Definition.');
+	}
+}
