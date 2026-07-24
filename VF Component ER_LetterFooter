@@ -1,0 +1,32 @@
+<apex:component id="ER_LetterFooter" Controller="ER_LetterHead" access="global">
+<apex:attribute name="isBiz" type="Boolean" required="false" default="false" description="Is Business?"/>
+    <body bgcolor="#ffffff" style="background-color:#ffffff;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0"  style="margin:0 auto; table-layout:fixed;">
+            <td>  
+                <tr align="center">
+                    <table width="640" border="0" cellpadding="0" cellspacing="0" class="fullWidth" align="center">
+                        <tr>
+                            <td class="fullWidth" align="center" style="color:#707070;font-size:12px;line-height:15px;">
+                                <apex:outputPanel rendered="{!isBiz}">
+                                    Customer Experience Centre email: <a href="mailto:businesscustomercare@atcoenergy.com" target="_top">BusinessCustomerCare@ATCOenergy.com</a><br />
+                                    Customer Experience Centre phone number: <nobr>1-844-687-2826</nobr><br />
+                                    Business hours: Monday to Friday 8am to 5pm
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!!isBiz}">    
+                                    Customer Experience Centre email: <a href="mailto:CustomerCare@ATCOenergy.com" target="_top">CustomerCare@ATCOenergy.com</a><br />
+                                    Customer Experience Centre phone number: <nobr>1-844-687-2826</nobr><br />
+                                    Business hours: Monday to Friday 8am to 8pm, Saturday 8am to 4:30pm
+                                </apex:outputPanel>
+                            </td>
+                        </tr>
+                        <tr> <td height="15" class="fullWidth" bgcolor="#ffffff" style="background-color:#ffffff;"></td> </tr>
+                        <tr>
+                            <td align="center" cellpadding="20" valign="top" style="color:#707070;font-size:12px;line-height:15px;">&copy; {!CopyrightYear} ATCO Energy Ltd. ATCO Energy is a trademark owned by ATCO Ltd. used under license.<br /> 2nd Floor East Tower, 5302 Forand Street SW Calgary, AB T3E 8B4</td>
+                        </tr>
+                    </table>                   
+                </tr>
+            </td>
+        </table>
+    </body>
+</apex:component>
+                         
