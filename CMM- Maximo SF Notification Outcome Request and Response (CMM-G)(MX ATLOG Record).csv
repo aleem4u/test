@@ -1,0 +1,59 @@
+Use Cases,"ATCO Log ATACTION
+ATLOG.ATACTION","ATCO Log Create Date
+ATLOG.CREATEDATE","ATCO Log Log Type
+ATLOG.LOG","ATCO Log Long Description
+ATLOG.LOG_DESCRIPTION","ATCO Log Status
+ATLOG.STATUS",
+Email Skipped - Duplicate Bylaw Infraction,Set to 'SF-EMAIL-SKIP',Set to current datetime,Set to 'Email Skipped - Duplicate Bylaw Infraction',Email sent for same day Bylaw Infraction via Work Order (WORKORDER.WONUM),SUCCESS,
+Email Skipped - No Email/Invalid Email,Set to 'SF-EMAIL-SKIP',Set to current datetime,Set to 'Email Skipped - No Email/Invalid Email',"Site Customer Name (WORKORDER.LOCATIONS.ATSERVICEPOINT.SITECUSTNAME)
+
+Site Customer Email (WORKORDER.LOCATIONS.ATSERVICEPOINT.SITECUSTEMAIL)",SUCCESS,
+SF Interface Message Sent for Email,Set to 'SF-EMAIL-REQ',Set to current datetime,Set to 'SF Interface Message Sent for Email',"Site Customer Name (WORKORDER.LOCATIONS.ATSERVICEPOINT.SITECUSTNAME)
+
+Site Customer Email (WORKORDER.LOCATIONS.ATSERVICEPOINT.SITECUSTEMAIL)",SUCCESS,
+SF Interface Message Sent for SMS,Set to 'SF-SMS-REQ',Set to current datetime,Set to 'SF Interface Message Sent for SMS',"Site Customer Name (WORKORDER.LOCATIONS.ATSERVICEPOINT.SITECUSTNAME)
+
+Site Customer Phone (WORKORDER.LOCATIONS.ATSERVICEPOINT.SITECUSTPHONE)",SUCCESS,
+Letter Skipped - Duplicate Bylaw Infraction,Set to 'SF-LTR-SKIP',Set to current datetime,Set to 'Letter Skipped - Duplicate Bylaw Infraction',Letter sent for same day Bylaw Infraction via Work Order (WORKORDER.WONUM),SUCCESS,
+Letter Skipped - Invalid Address,Set to 'SF-LTR-SKIP',Set to current datetime,Set to 'Letter Skipped - Invalid Address',"Address Validation Date
+(WORKORDER.LOCATIONS.SERVICEADDRESS.ATVALIDATIONDATE)
+
+Address Line 1	
+(WORKORDER.LOCATIONS.SERVICEADDRESS.STREETADDRESS)
+
+City
+(WORKORDER.LOCATIONS.SERVICEADDRESS.CITY)
+
+Province
+(WORKORDER.LOCATIONS.SERVICEADDRESS.STATEPROVINCE)
+
+Postal Code
+(WORKORDER.LOCATIONS.SERVICEADDRESS.POSTALCODE)",SUCCESS,
+SF Interface Message Sent for Letter,Set to 'SF-LTR-REQ',Set to current datetime,Set to 'SF Interface Message Sent for Letter',"Address Validation Date
+(WORKORDER.LOCATIONS.SERVICEADDRESS.ATVALIDATIONDATE)
+
+Address Line 1	
+(WORKORDER.LOCATIONS.SERVICEADDRESS.STREETADDRESS)
+
+City
+(WORKORDER.LOCATIONS.SERVICEADDRESS.CITY)
+
+Province
+(WORKORDER.LOCATIONS.SERVICEADDRESS.STATEPROVINCE)
+
+Postal Code
+(WORKORDER.LOCATIONS.SERVICEADDRESS.POSTALCODE)",SUCCESS,
+Notification State changes to 'Cancelled',Set to 'NOTIFSTATEUPDATE',Set to current datetime,Updated Notification State=Cancelled <REASON>,,SUCCESS,
+Notification State changes to 'Complete',Set to 'NOTIFSTATEUPDATE',Set to current datetime,Updated Notification State= Complete <REASON>,,SUCCESS,
+Notification State changes to 'Pending Manual',Set to 'NOTIFSTATEUPDATE',Set to current datetime,Updated Notification State=Pending Manual <REASON>,,SUCCESS,
+If Email successful,Set to 'SF-EMAIL-RESP',Set to current datetime,Set to 'SF Returned Successful Delivery Receipt',N/A,SUCCESS,
+if Email unsuccessful ,Set to 'SF-EMAIL-RESP',Set to current datetime,Set to 'SF Returned Unsuccessful Delivery Receipt',Set to <error from Salesforce>,SUCCESS,
+If SMS successful,Set to 'SF-SMS-RESP',Set to current datetime,SF Returned SMS Carrier Status <SF Status>,,SUCCESS,
+if SMS unsuccessful ,Set to 'SF-SMS-RESP',Set to current datetime,SF Returned SMS Carrier Status <SF Status>,Set to <error from Salesforce>,SUCCESS,
+If Letter successful,Set to 'SF-LTR-RESP',Set to current datetime,SF Returned Letter Status <SF Status>,,SUCCESS,
+if Letter unsuccessful ,Set to 'SF-LTR-RESP',Set to current datetime,SF Returned Letter Status <SF Status>,Set to <error from Salesforce>,SUCCESS,
+Owner Group Update - Bylaw Infractions,OWNERGRPUPDATE,Set to current datetime,Infraction Reviewed,"Previous Owner Group
+(WORKORDER.OWNERGROUP)
+
+Change by
+(WORKODER.CHANGEBY)",SUCCESS,
