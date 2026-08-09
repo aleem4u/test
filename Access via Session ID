@@ -1,0 +1,40 @@
+Get Your Session ID and Server URLLog in to your Salesforce org normally.
+Open the Developer Console from the gear icon.
+Select Debug > Open Execute Anonymous Window.Run an Apex snippet to print your session details
+:apex
+System.debug('URL: ' + URL.getOrgDomainUrl().toExternalForm());
+System.debug('Session ID: ' + UserInfo.getSessionId());
+Check the Debug Log to copy the printed values.
+
+Connect via API Requests
+Set your request endpoint to your REST or SOAP API base URL (e.g., https://salesforce.com).
+Add an HTTP header of Authorization: Bearer <Your_Session_ID>.
+Add a header of Content-Type: application/json.
+
+
+Connect via Frontdoor (UI Login)
+Construct the frontdoor URL using your domain and session ID:
+https://salesforce.com<Your_Session_ID>
+Paste this URL into a browser to open an authenticated session instantly.
+
+To connect VS Code and Salesforce CLI (SFDX) using an existing session ID, 
+you use the standard authentication command while supplying the access token and your org instance URL.
+
+1. Gather Your Credentials 
+Ensure you have the exact values you copied from your Developer Console:
+Session ID (the access token starting with 00D...)
+Instance URL (your specific My Domain URL, e.g., https://salesforce.com)
+
+2. Run the Auth CommandOpen the terminal in VS Code and run the sf org login access-token command.
+sf org login access-token --instance-url <YOUR_INSTANCE_URL> --alias <YOUR_ORG_ALIAS>
+
+3. Provide the Session ID
+Press Enter after running the command.
+The terminal will prompt you: Enter your access token:.
+Paste your Session ID and press Enter.
+The CLI will mask the characters for security.
+
+4. Verify the Connection
+Confirm the login was successful by listing your authorized orgs:
+sf org list
+Look for your chosen <YOUR_ORG_ALIAS> in the list to ensure it shows as connected.
