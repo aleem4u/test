@@ -1,0 +1,421 @@
+<messaging:emailTemplate subject="ATCO Energy Move Request" recipientType="Contact" relatedToType="Move_Detail__c">
+<messaging:plainTextEmailBody >
+
+</messaging:plainTextEmailBody>
+
+<messaging:htmlEmailBody >
+
+    <html>
+        <style type="text/css">
+        body {
+            //background-color:#2F2F2F;
+            //background-color:#FFFFFF;
+        }
+        
+        table {
+            background-color: #FFFFFF;
+        
+        } 
+                
+        h {
+            color: #0d6bab;
+            font-family: ProximaNovaBold, Arial, Helvetica, sans-serif;
+        }
+                  
+        h2 {
+            color: #0d6bab;
+            font-family: ProximaNovaBold, Arial, Helvetica, sans-serif;
+        }
+        
+        h3 {
+            color: #0d6bab;
+            width:450px;
+            word-wrap: break-word;
+            font-family: ProximaNovaBold, Arial, Helvetica, sans-serif;
+        }
+        
+        .emailFooter-Div{
+            color: #0d6bab;
+            font-family: ProximaNovaBold, Arial, Helvetica, sans-serif;
+        }
+        
+        div, p, a, li, td {
+                -webkit-text-size-adjust: none;
+            }
+
+            html, body {
+                background-color: #ffffff;
+            }
+
+            body {
+                /* Resets all body margins and padding to "0" */
+                margin: 0;
+                padding: 0;
+                
+                /* Prevents Webkit and Windows Mobile platforms from changing default font sizes. */
+                -webkit-text-size-adjust: none;
+                -ms-text-size-adjust: none;
+                font-family: Montserrat, Verdana, Helvetica, sans-serif;
+            }
+
+            b{
+                font-family: Montserrat, Verdana, Helvetica, sans-serif;
+                font-weight:bold;
+            }
+            
+            /* webkit padding issue. */
+            table {
+                /*border-collapse: collapse;*/
+                /*border-spacing: 0;*/
+                /*border: 0px solid !important;*/
+                font-size:14px;
+            }
+
+            /* Outlook 2007, 2010, and Gmail td padding issue. */
+        
+            table td {
+                /*border-collapse: collapse;*/
+                mso-table-lspace: 0;
+                mso-table-rspace: 0;
+            }
+
+            table, td, tr {
+                /*border-collapse: collapse;*/
+                mso-table-lspace: 0;
+                mso-table-rspace: 0;
+            }
+
+            /* resets */
+            p {
+                margin: 0;
+                padding: 0;
+                margin-bottom: 0;
+            }
+
+            /* 'disable' smartphone autolinking */
+            a[href^="tel"], a[href^="sms"] {
+                text-decoration: none;
+                color: #333333;
+                pointer-events: none;
+                cursor: default;
+            }
+
+            span[class=mobileShow], table[class=mobileShow] {
+                display: none !important;
+                font-size: 0;
+                max-height: 0;
+                line-height: 0;
+                padding: 0;
+                mso-hide: all;
+            }
+        
+            .sectionHeader {
+                display:block;
+                text-align:left;
+            }
+        
+            .labelCol {
+                width:190px;
+                text-align:left;
+                vertical-align:top;
+            }
+        
+            .dataCol {
+                text-align:left;
+                vertical-align:top;
+            }
+        
+        
+            @media only screen and (max-width: 480px) /*and (-webkit-min-device-pixel-ratio: 1)*/{
+        
+                table[class=fullWidth], td[class=fullWidth] {
+                    width: 90% !important;
+                    font-size:12px;
+                }
+        
+                span[class=mobileShow], table[class=mobileShow] {
+                    display: inline !important;
+                    font-size: inherit;
+                    max-height: inherit;
+                    line-height: inherit;
+                    padding: inherit;
+                    mso-hide: none;
+                }
+        
+                span[class=mobileHide]{
+                    display:none;
+                    font-size: 0;
+                    max-height: 0;
+                    line-height: 0;
+                    padding: 0;
+                    mso-hide: all;
+                }
+        
+                table[class=fullWidth100], td[class=fullWidth100], img[class=fullWidth100] {
+                    width: 100% !important;
+                }
+        
+                table[class=fullWidth260], td[class=fullWidth260] {
+                    width: 90% !important;
+                    font-size:12px !important;
+                }
+        
+                td[class=logoWidth1]{
+                    width: 90px;
+                }
+        
+                td[class=logoWidth1] img{
+                    width: 90px;
+                    height:auto;
+                }
+
+                td[class=logoWidth2]{
+                    width:180px;
+        
+                }
+
+                /* Shrink and image to 300px wide, make sure height is set to auto as well*/
+                img[class=fullWidth260] {
+                    width: 258px !important;
+                    height: auto !important;
+                }
+
+                img[class=fullWidth] {
+                    width: 300px !important;
+                    height: auto !important;
+                }
+        
+                .labelCol {
+                    width:170px;
+                }
+        
+            }
+
+        </style>
+        
+        <head>
+        </head>
+
+        <body bgcolor="#ffffff" style="background-color:#ffffff;">
+        
+            <table width="640" border="0" cellpadding="0" cellspacing="0" class="fullWidth" align="center">
+                <tr> 
+                    <td height="25" class="fullWidth"></td> 
+                </tr>
+            </table>
+            
+            <c:ER_LetterHead />
+            
+            <table width="640" height="auto" class="fullWidth100" align="center" bgcolor="#ffffff" style="background-color:#ffffff;">
+            
+                <tr>
+                    <td height="15" class="fullWidth100" bgcolor="#ffffff"></td>
+                </tr>
+
+                <tr>
+                    <td align="center" style="display:block;">
+
+                        <table width="640" align="center" class="fullWidth260" style="background-color:#ffffff; display:block;">
+
+                            <tr>
+                                <td class="fullWidth260" width="640" style="display:block; line-height:20px;color:#2c2a29;">
+
+                                    <table border="0" cellpadding="5" width="550" cellspacing="5" height="400">
+
+                                        <tbody>
+
+                                            <tr valign="top" height="400">
+
+                                                <td style=" background-color:#FFFFFF; color:#000000; font-size:12pt;">
+
+
+                                                <!--
+                                                    AM: Updated greeting based on Move_Detail__c.Customer_Type__c
+
+                                                    SCOM = Hi <Account Name>
+                                                    RES  = Dear <Customer First Name>
+                                                -->
+
+                                                <p>
+
+                                                    <!-- AM: SCOM Customer Greeting -->
+                                                    <apex:outputPanel rendered="{!relatedTo.Customer_Type__c == 'SCOM'}">
+                                                        Hi {!relatedTo.Statement_Account__r.Name},
+                                                    </apex:outputPanel>
+
+                                                    <!-- AM: RES Customer Greeting -->
+                                                    <apex:outputPanel rendered="{!relatedTo.Customer_Type__c == 'RES'}">
+                                                        Dear {!relatedTo.Statement_Account__r.Primary_Contact_First_Name__c},
+                                                    </apex:outputPanel>
+
+                                                </p>
+
+                                                <!-- AM: End Customer Type Greeting -->
+
+                                                <br/>
+
+                                                <p>
+                                                    Thanks for contacting us.  We’re happy to help.  
+                                                </p>
+
+                                                <br/>
+
+                                                <p>
+                                                    Your move request has been completed. Details of the move are listed below for your review:
+                                                </p>
+
+                                                <br/>
+
+                                                <table style="width: 70%;">
+
+                                                    <tr>
+                                                        <td>
+                                                            Move Out Date:&nbsp;
+                                                            
+                                                            <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                                                                <apex:param value="{!relatedTo.Move_Out_Date__c}"/>
+                                                            </apex:outputText>
+
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td>
+                                                            <pre style="font-family: Arial, Helvetica, sans-serif;">{!relatedTo.Move_Out_Assets__c}</pre>
+                                                        </td>
+                                                    </tr>
+
+                                                </table>
+                                                
+                                                <p />
+                                                
+                                                <table style="width: 100%;">
+
+                                                    <tr>
+                                                        <td>
+
+                                                            Move In Date:&nbsp;
+
+                                                            <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                                                                <apex:param value="{!relatedTo.Move_In_Date__c}"/>
+                                                            </apex:outputText>
+
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td>
+                                                            <pre style="font-family: Arial, Helvetica, sans-serif;">{!relatedTo.Move_In_Assets__c}</pre>
+                                                        </td>
+                                                    </tr>
+
+                                                </table>
+                        
+                                                <p>
+                                                    Additional Comments:&nbsp;{!relatedTo.Additional_Comments__c}
+                                                </p>
+
+                                                <br/>
+
+                                                <p>
+                                                    Did you know we offer home services, and eligible customers can get up to $200 a year in bill rebates for using them? Explore home services from vetted pros here. 
+                                                </p>
+
+                                                <br/>
+
+                                                <p>
+                                                    Visit our&nbsp;
+                                                    
+                                                    <apex:outputLink value="https://www.atcoenergy.com/about-us/contact-us?_gl=1*s3r325*_gcl_aw*R0NMLjE3NTAxMDEyMzcuQ2p3S0NBandnYl9DQmhCTUVpd0EwcDNvT0lmWWVBSVNZUHUxbGl6N3ZmbVB0dThFS3RhZEpXdFJmMEFUZnhHcjhEc1YwMFlaaHNaR0dSb0NMMFlRQXZEX0J3RQ..*_gcl_au*MTY0NTUyOTkzMi4xNzQ5NzM3MDA2*_ga*MjAzNTA4OTU3OS4xNzQzNDQ5MDA2*_ga_YYEN6T2MXX*czE3NTM4MDM1NjkkbzE1MSRnMSR0MTc1MzgwNTA3NiRqNjAkbDAkaDE1MzA5NzE5ODg.">
+                                                        Contact Us
+                                                    </apex:outputLink> 
+
+                                                    page, where you'll find a variety of options for getting in touch with us.
+                                                </p>
+
+                                                <br/>
+
+                                                <p>
+                                                    Sincerely,
+                                                </p>
+
+                                                <br/>
+
+                                                <p>
+                                                    Your local ATCO Energy team  
+                                                </p>
+
+                                                <br/>
+
+                                                </td>
+
+                                            </tr>
+
+                                        </tbody>
+
+                                    </table>
+
+                                </td>
+
+                            </tr>
+
+                        </table>
+
+                    </td>
+
+                </tr>
+
+            </table>
+            
+            <table width="640" class="fullWidth100" align="center">
+
+                <tr>
+                    <td height="1" width="600" align="center" class="fullWidth100" bgcolor="#ccd1d9" style="background-color:#ccd1d9;"></td>
+                </tr>
+
+                <tr>
+                    <td height="15" width="40" class="fullWidth" bgcolor="#ffffff" style="background-color:#ffffff;"></td>
+                </tr>
+
+            </table>
+            
+            <!-- <c:ER_LetterFooter /> -->
+
+            <c:ER_LetterFooter isBiz="{!IF(relatedTo.Customer_Type__c == 'SCOM', true, false)}"/>
+
+            <!-- <c:ER_LetterFooter isBiz="{!IF(relatedTo.Customer_Type__c == 'RES', true, false)}"/> -->
+            
+            <!--  
+            <table width="640" border="0" cellpadding="0" cellspacing="0" class="fullWidth" align="center">
+
+                <tr>
+                    <td class="fullWidth" align="justify" style="color:#000;font-size:12px;line-height:15px;text-align:justify">
+
+                        <br/><br/>
+
+                        <b>
+                            Customers are free to purchase natural gas services or electricity services from a retailer of their choice. 
+                            For a list of retailers, visit 
+                            <a href="http://www.ucahelps.gov.ab.ca" class="white" target="_blank">
+                                www.ucahelps.gov.ab.ca
+                            </a> 
+                            or call 310-4822 (toll free in Alberta).
+                        </b>
+
+                    </td>
+                </tr>
+
+                <tr> 
+                    <td height="15" class="fullWidth" bgcolor="#ffffff" style="background-color:#ffffff;"></td> 
+                </tr>
+
+            </table> 
+            -->
+        
+        </body>
+
+    </html>
+   
+</messaging:htmlEmailBody>
+
+</messaging:emailTemplate>
