@@ -1,0 +1,51 @@
+ATCO Ventures - Partner Community
+Description
+
+Implement a Partner Community
+a. A new partner community site will be established, along with appropriate profile, permissions and sharing rules.
+b. The ATCO Ventures team will be able to onboard new partners as they are established, as well as deactivate users that are no longer partners.
+c. Authorized partner users will be able to create new leads (deal registration via global quick action), and view existing leads shared with them.
+d. Partners will collaborate on same record type as ATCO Ventures; but the Leads and Opportunities will be flagged to reflect Partner collaboration for ease of reporting.
+i. Layouts and field level security will be used to ensure Partners are able to view or edit only the specified attributes that are needed..
+ii. Leads created by Partners will be assigned to a queue for the ATCO Ventures team to pick up and work on.
+iii. When a lead is converted into an Opportunity, the Partner that submitted the deal will be added to the Opportunity Team automatically. ATCO Ventures will be able to add/remove both internal and external resources to the Opportunity Team.
+e. The portal will support authorized users to collaborate on deals where they are an identified team member. Users will only be able to edit certain fields and not others.
+i. Create an Opportunity page layout for ATCO Ventures Partners and display lists of Opportunities that Partners are privy to in the portal.
+
+_______________________________________________________________________________________________________________________________________________________
+ATCO Ventures - Partner Community Access for Sales Collaboration
+
+Description
+Set up the Partner Community so ATCO Ventures and partners can collaborate on sales opportunities and related customer information.
+
+Narrative
+As an 
+ATCO Ventures external partner or consultant 
+I want to 
+
+secure access to the partner experience
+submit a prospective deal
+continue collaborating when my submitted Lead becomes an Opportunity
+
+So that
+I can collaborate on permitted deals while maintaining integrity of the deal.
+the internal sales team can review and progress partner-generated opportunities.
+I can remain involved in the deal where authorized.
+
+Acceptance Criteria
+An approved Partner Community/Experience site will be configured.
+Partner users will receive only the approved profile/Roles, permission set and sharing access.
+Authorized internal users will be able to support onboarding and deactivation of partner users according to the approved operating process.
+Partner access will not grant visibility to unrelated confidential deals.
+When a partner-submitted Lead is converted, the originating Partner will be added to the Opportunity Team according to the approved design.
+   The Opportunity will be identifiable as involving Partner collaboration.
+   The Partner will only be able to access Opportunities where access has been explicitly granted through the approved model.
+   Internal authorized users will be able to add or remove internal and external Opportunity Team members.
+
+ 
+Technical Solution Details
+Partner licensing is a dependency for production rollout.
+Partner page layout and field permissions will restrict view/edit access to approved attributes.
+Subtasks
+
+_____________________________________________________________________________________________________________________________________
